@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraChess | Premium Adaptive AI Chess</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Experience AuraChess, a premium single-page chess application with an adaptive AI engine that scales dynamically to match your ELO strength. Featuring futuristic glassmorphic aesthetics.">
+  <meta name="keywords" content="chess, play chess, online chess, adaptive chess, chess computer, elo, glassmorphic chess, premium web chess">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Local chess engine -->
+  <script src="js/chess.min.js"></script>
+</head>
+<body>
+
+  <!-- Premium Header -->
+  <header>
+    <div class="logo">
+      <!-- Modern minimalist crown svg -->
+      <svg viewBox="0 0 100 100">
+        <path d="M 15 80 L 25 35 L 42 55 L 50 25 L 58 55 L 75 35 L 85 80 Z" stroke-width="4" stroke-linejoin="round" />
+        <line x1="10" y1="85" x2="90" y2="85" stroke-width="6" stroke-linecap="round" />
+      </svg>
+      AuraChess
+    </div>
+    
+    <div class="player-profile-badge">
+      <div id="profile-avatar" class="badge-avatar">P</div>
+      <div class="badge-info">
+        <span class="badge-name">Profile</span>
+        <span class="badge-elo">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+            <path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/>
+          </svg>
+          ELO: <span id="profile-elo">1000</span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Container -->
+  <main>
+    
+    <!-- Left Column: Chessboard, Statuses, and Players Info -->
+    <div class="board-container">
+      
+      <!-- Opponent / Computer Bar -->
+      <div id="computer-bar" class="player-bar computer-bar">
+        <div class="player-bar-info">
+          <div id="opp-bar-avatar" class="player-bar-avatar">🧑‍💼</div>
+          <div class="player-bar-details">
+            <h3 id="opp-bar-name">Oliver 🧑‍💼</h3>
+            <p>Computer (ELO: <span id="opp-bar-elo">800</span>)</p>
+          </div>
+        </div>
+        <div id="opp-captured" class="captured-list"></div>
+      </div>
+      
+      <!-- Chessboard Outer Shell -->
+      <div class="chessboard-outer">
+        <!-- Main grid containing 64 squares -->
+        <div id="board-grid" class="chessboard-grid"></div>
+        
+        <!-- Pawn Promotion Dialog -->
+        <div id="promotion-dialog" class="promotion-dialog">
+          <div class="promotion-box">
+            <h3>Pawn Promotion</h3>
+            <p>Choose piece to promote your pawn:</p>
+            <div class="promotion-options">
+              <button id="promo-q" class="promotion-opt" title="Queen">
+                <svg viewBox="0 0 100 100"><path d="M 20 25 L 35 40 L 50 18 L 65 40 L 80 25 L 75 75 L 25 75 Z" fill="#fff" stroke="#1e293b" stroke-width="3"/></svg>
+              </button>
+              <button id="promo-r" class="promotion-opt" title="Rook">
+                <svg viewBox="0 0 100 100"><path d="M 33 25 L 33 35 L 40 35 L 40 28 L 60 28 L 60 35 L 67 35 L 67 25 Z M 35 35 L 65 35 L 60 78 L 40 78 Z" fill="#fff" stroke="#1e293b" stroke-width="3"/></svg>
+              </button>
+              <button id="promo-b" class="promotion-opt" title="Bishop">
+                <svg viewBox="0 0 100 100"><path d="M 50 24 C 36 24, 34 45, 38 60 C 42 76, 58 76, 62 60 C 66 45, 64 24, 50 24 Z" fill="#fff" stroke="#1e293b" stroke-width="3"/></svg>
+              </button>
+              <button id="promo-n" class="promotion-opt" title="Knight">
+                <svg viewBox="0 0 100 100"><path d="M 30 80 C 30 80, 25 55, 35 40 C 45 25, 60 20, 68 28 C 76 36, 74 48, 66 52 C 58 56, 58 62, 60 68 C 62 74, 66 80, 66 80 Z" fill="#fff" stroke="#1e293b" stroke-width="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Game Over overlay modal -->
+        <div id="status-overlay" class="status-overlay">
+          <div class="status-box">
+            <div id="status-icon" class="status-icon">🏆</div>
+            <h2 id="status-title" class="status-title">Victory!</h2>
+            <p id="status-message" class="status-message">Checkmate! You have defeated the machine.</p>
+            <div id="status-elo-delta" class="elo-delta-tag">ELO: 1000 ➔ 1016 (+16)</div>
+            <button id="btn-close-status" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Close</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Player / User Bar -->
+      <div id="user-bar" class="player-bar user-bar active-turn">
+        <div class="player-bar-info">
+          <div class="player-bar-avatar" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet)); color: #fff;">🧑‍💻</div>
+          <div class="player-bar-details">
+            <h3 id="player-bar-name">Player</h3>
+            <p>User (ELO: <span id="player-bar-elo">1000</span>)</p>
+          </div>
+        </div>
+        <div id="player-captured" class="captured-list"></div>
+      </div>
+      
+    </div>
+
+    <!-- Right Column: Control Console & Diagnostics -->
+    <div class="game-console">
+      
+      <!-- Opponent Profiler -->
+      <div class="console-card opponent-card">
+        <div class="opponent-header">Opponent Profile</div>
+        
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <div id="opp-avatar" class="badge-avatar" style="width: 50px; height: 50px; font-size: 1.8rem; flex-shrink: 0;">🧑‍💼</div>
+          <div style="display: flex; flex-direction: column;">
+            <h3 id="opp-title" style="font-size: 1.1rem; color: #fff;">Beginner (Casual Clubber)</h3>
+            <div style="display: flex; align-items: center; margin-top: 0.25rem;">
+              <select id="opp-select" class="custom-select" style="padding: 0.2rem 0.5rem; font-size: 0.85rem;">
+                <option value="0">Sparky 🐶 (400)</option>
+                <option value="1" selected>Oliver 🧑‍💼 (800)</option>
+                <option value="2">Sophia 🎓 (1200)</option>
+                <option value="3">Marcus 🏆 (1600)</option>
+                <option value="4">Aurora 👑 (2000)</option>
+                <option value="5">DeepThought 💻 (2400)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <p id="opp-desc" class="opponent-description">Plays chess on his lunch break. Solid starter, but loses focus sometimes.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+          <span class="dialogue-box-label">Opponent Chatter</span>
+          <div id="opp-dialogue" class="dialogue-box-content">
+            "Hey there! Let's play!"
+          </div>
+        </div>
+      </div>
+      
+      <!-- Match History & Performance Logs -->
+      <div class="console-card history-card">
+        <div class="tabs-container">
+          <button id="tab-history" class="tab-btn active">Live Log</button>
+          <button id="tab-stats" class="tab-btn">Statistics</button>
+        </div>
+        
+        <!-- Live Log Content -->
+        <div id="content-history" class="tab-content active">
+          <div class="history-card-header">
+            <span>Move history in algebraic notation</span>
+          </div>
+          <div id="moves-log" class="moves-log">
+            <!-- Dynamically populated rows -->
+            <div class="move-row" style="justify-content: center; color: #64748b; font-style: italic; font-size: 0.8rem; display: flex;">
+              No moves played yet.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Statistics Content -->
+        <div id="content-stats" class="tab-content">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div id="stat-wins" class="stat-val">0</div>
+              <div class="stat-label">Wins</div>
+            </div>
+            <div class="stat-item">
+              <div id="stat-losses" class="stat-val">0</div>
+              <div class="stat-label">Losses</div>
+            </div>
+            <div class="stat-item">
+              <div id="stat-draws" class="stat-val">0</div>
+              <div class="stat-label">Draws</div>
+            </div>
+            <div class="stat-item">
+              <div id="stat-total" class="stat-val">0</div>
+              <div class="stat-label">Total Played</div>
+            </div>
+          </div>
+          
+          <h4 style="font-size: 0.8rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin: 1rem 0 0.5rem 0;">Recent Matches</h4>
+          <div id="history-list" class="history-list">
+            <!-- Match record list -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Console Buttons & Controls -->
+      <div class="console-card controls-card">
+        <button id="btn-new" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm-6 8c0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3c-3.31 0-6-2.69-6-6z"/>
+          </svg>
+          New Game
+        </button>
+        
+        <div class="btn-group-half">
+          <button id="btn-resign" class="btn btn-danger">
+            Resign
+          </button>
+          <button id="btn-draw" class="btn">
+            Offer Draw
+          </button>
+        </div>
+        
+        <button id="btn-undo" class="btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+            <path d="M12.5 8c-2.65 0-5.05 1-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/>
+          </svg>
+          Undo Move
+        </button>
+        
+        <div class="settings-hud">
+          <button id="toggle-sound" class="hud-toggle active" title="Toggle Sound FX">🔊</button>
+          <button id="toggle-coords" class="hud-toggle active" title="Toggle Coordinates">🌐</button>
+          <button id="toggle-hints" class="hud-toggle active" title="Toggle Move Guides">💡</button>
+          <button id="toggle-scale" class="hud-toggle active" title="Toggle ELO Match Scaling">🔄</button>
+        </div>
+        
+        <button id="btn-reset-stats" class="btn btn-danger" style="margin-top: 0.5rem; font-size: 0.8rem; padding: 0.5rem 1rem; border-style: dashed; opacity: 0.7;">
+          Reset ELO & Stats
+        </button>
+      </div>
+      
+    </div>
+    
+  </main>
+
+  <!-- Load main script as module -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
