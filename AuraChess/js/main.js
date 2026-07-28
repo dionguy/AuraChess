@@ -285,7 +285,7 @@ class ChessApp {
   cacheDOMElements() {
     this.elements = {
       boardGrid: document.getElementById('board-grid'),
-      playerEloDisplay: document.getElementById('player-elo'),
+      playerEloDisplay: document.getElementById('player-elo') || document.getElementById('player-bar-elo'),
       playerProfileElo: document.getElementById('profile-elo'),
       playerProfileAvatar: document.getElementById('profile-avatar'),
       
@@ -429,9 +429,9 @@ class ChessApp {
 
   loadStateFromStorage() {
     const elo = StorageManager.getPlayerElo();
-    this.elements.playerEloDisplay.textContent = elo;
-    this.elements.playerProfileElo.textContent = elo;
-    this.elements.playerBarElo.textContent = elo;
+    if (this.elements.playerEloDisplay) this.elements.playerEloDisplay.textContent = elo;
+    if (this.elements.playerProfileElo) this.elements.playerProfileElo.textContent = elo;
+    if (this.elements.playerBarElo) this.elements.playerBarElo.textContent = elo;
 
     // Load configurations
     const settings = StorageManager.getSettings();
@@ -939,8 +939,34 @@ class ChessApp {
   }
 
   resignGame() {
+    console.log('resignGame() invoked');
     if (confirm('Are you sure you want to resign?')) {
+      console.log('resignGame: confirmed');
       this.endGame('loss', 'You resigned the match.');
+
+      // Force a UI/game reset after a short delay to ensure overlay and storage updates complete.
+      setTimeout(() => {
+        console.log('resignGame: performing forced reset');
+        // Ensure overlays are hidden
+        this.elements.statusOverlay.classList.remove('active');
+        this.elements.promotionDialog.classList.remove('active');
+
+        // Reset game state
+        this.game = new Chess();
+        this.selectedSquare = null;
+        this.pendingPromotionMove = null;
+
+        // Re-apply opponent scaling if enabled
+        if (this.autoScaleOpponent) {
+          this.scaleOpponentToPlayerElo();
+          this.updateOpponentSelection();
+        }
+
+        // Refresh board and UI
+        this.resetBoard();
+        this.updateUIActiveTurn();
+        this.showToast('Game reset after resignation.');
+      }, 700);
     }
   }
 
@@ -1175,3 +1201,38 @@ window.addEventListener('DOMContentLoaded', () => {
   const app = new ChessApp();
   app.boot();
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Sélection des éléments clés
+    const controlsCard = document.querySelector(".controls-card");
+    const userBar = document.getElementById("user-bar");
+    const btnNew = document.getElementById("btn-new");
+    const btnResign = document.getElementById("btn-resign");
+
+    // 2. Sauvegarde du conteneur d'origine (la console de droite)
+    // On récupère le parent initial de la carte pour pouvoir la remettre à sa place plus tard
+    const originalConsole = controlsCard ? controlsCard.parentElement : null;
+
+    // 3. Action : Clic sur "New Game" -> Déplacement sous le joueur
+    if (btnNew && controlsCard && userBar) {
+        btnNew.addEventListener("click", () => {
+            // Déplace proprement tout le bloc juste après le bandeau du joueur
+            userBar.after(controlsCard);
+            
+            // Optionnel : Ajoute une classe pour styliser la carte différemment lorsqu'elle est à gauche
+            controlsCard.classList.add("moved-under-player");
+        });
+    }
+
+    // 4. Action : Clic sur "Resign" -> Retour à la console de droite
+    if (btnResign && controlsCard && originalConsole) {
+        btnResign.addEventListener("click", () => {
+            // Remet le bloc à sa position initiale à droite
+            originalConsole.appendChild(controlsCard);
+            
+            // Enlève la classe de transition si elle a été ajoutée
+            controlsCard.classList.remove("moved-under-player");
+        });
+    }
+});
+
