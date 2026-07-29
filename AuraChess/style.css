@@ -957,3 +957,9 @@ main {
   color: #d8dee9;
   background: rgba(216, 222, 233, 0.08);
 }
+
+/* Applies only when the controls card is immediately after the user bar */
+#user-bar + .controls-card {
+  margin-top: 15px;
+  width: 100%; /* Ensures that the card takes the same width as the player bar */
+}
